@@ -1,2 +1,3 @@
-# birdwatching_mcp
+# README
+
 This repo created by Terraform
