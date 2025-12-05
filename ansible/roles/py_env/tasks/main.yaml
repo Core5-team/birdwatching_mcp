@@ -69,19 +69,3 @@
   until: pkg_install is succeeded
   environment: "{{ apt_env }}"
   become: yes
-
-- name: Create application user
-  ansible.builtin.user:
-    name: "{{ app_user }}"
-    system: yes
-    create_home: yes
-    home: "/home/{{ app_user }}"
-    shell: /usr/sbin/nologin
-
-- name: Create app directory
-  ansible.builtin.file:
-    path: "{{ app_dir }}"
-    state: directory
-    owner: "{{ app_user }}"
-    group: "{{ app_user }}"
-    mode: "0755"
