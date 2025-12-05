@@ -21,7 +21,7 @@
     mode: 0755
 
 - name: Create venv for client
-  command: "python3.13 -m venv {{ client_dir }}/venv"
+  command: "python3 -m venv {{ client_dir }}/venv"
   args:
     creates: "{{ client_dir }}/venv"
 

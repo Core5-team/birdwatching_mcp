@@ -21,7 +21,7 @@
     mode: 0755
 
 - name: Create venv for server
-  command: "python3.13 -m venv {{ server_dir }}/venv"
+  command: "python3 -m venv {{ server_dir }}/venv"
   args:
     creates: "{{ server_dir }}/venv"
 
