@@ -16,7 +16,7 @@
 
 - name: Upload MCP Server files
   copy:
-    src: "../../birdwatching_mcp_server/"
+    src: "{{ lookup('env', 'WORKSPACE') }}/birdwatching_mcp_server/"
     dest: "{{ server_dir }}"
     mode: 0755
 
