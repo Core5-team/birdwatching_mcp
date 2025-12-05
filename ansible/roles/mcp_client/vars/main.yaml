@@ -1,0 +1,5 @@
+client_dir: /opt/birdwatching/mcp_client
+client_port: ""
+server_script_path: "/opt/birdwatching/mcp_server/main.py"
+anthropic_api_key: ""
+app_user: ""

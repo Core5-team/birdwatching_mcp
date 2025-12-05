@@ -1,0 +1,51 @@
+- name: Create application user
+  ansible.builtin.user:
+    name: "{{ app_user }}"
+    system: yes
+    create_home: yes
+    home: "/home/{{ app_user }}"
+    shell: /usr/sbin/nologin
+
+- name: Create MCP Server directory
+  file:
+    path: "{{ server_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+
+- name: Upload MCP Server files
+  copy:
+    src: "../../birdwatching_mcp_server/"
+    dest: "{{ server_dir }}"
+    mode: 0755
+
+- name: Create venv for server
+  command: "python3.13 -m venv {{ server_dir }}/venv"
+  args:
+    creates: "{{ server_dir }}/venv"
+
+- name: Install server dependencies
+  pip:
+    requirements: "{{ server_dir }}/requirements.txt"
+    virtualenv: "{{ server_dir }}/venv"
+
+- name: Generate .env for server
+  template:
+    src: server.env.j2
+    dest: "{{ server_dir }}/.env"
+
+- name: Deploy systemd service for server
+  template:
+    src: mcp-server.service.j2
+    dest: /etc/systemd/system/mcp-server.service
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start MCP Server
+  systemd:
+    name: mcp-server
+    enabled: yes
+    state: restarted
