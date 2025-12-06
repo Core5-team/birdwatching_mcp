@@ -1,0 +1,15 @@
+[Unit]
+Description=MCP Birdwatching Client
+After=network.target
+
+[Service]
+WorkingDirectory={{ client_dir }}
+Environment="PYTHONUNBUFFERED=1"
+EnvironmentFile={{ client_dir }}/.env
+ExecStart={{ client_dir }}/venv/bin/python {{ client_dir }}/api/main.py
+Restart=always
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

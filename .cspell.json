@@ -1,5 +1,20 @@
 {
   "version": "0.2",
   "language": "en",
-  "words": ["dotenv", "httpx", "fastmcp", "fastapi", "venv", "uvicorn"]
+  "words": [
+    "dotenv",
+    "httpx",
+    "fastmcp",
+    "fastapi",
+    "venv",
+    "uvicorn",
+    "nologin",
+    "virtualenv",
+    "PYTHONUNBUFFERED",
+    "noninteractive",
+    "dpkg",
+    "psycopg",
+    "CREDS",
+    "creds"
+  ]
 }

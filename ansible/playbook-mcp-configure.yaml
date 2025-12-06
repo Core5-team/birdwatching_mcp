@@ -1,0 +1,7 @@
+- name: Deploy MCP
+  hosts: mcp
+  become: yes
+  roles:
+    - py_env
+    - mcp_server
+    - mcp_client
