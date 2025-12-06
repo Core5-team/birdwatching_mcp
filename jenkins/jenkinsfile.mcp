@@ -1,0 +1,95 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'ENV', choices: ['dev', 'stage', 'prod'], description: 'Select environment')
+    }
+
+    environment {
+        AWS_REGION = "us-east-1"
+        ANSIBLE_PLAYBOOK = "${WORKSPACE}/ansible/playbook-mcp-configure.yaml"
+        ANSIBLE_INVENTORY = "/var/lib/jenkins/inventories/${params.ENV}.ini"
+    }
+
+    stages {
+
+        stage('Load ENV Credentials') {
+            steps {
+                script {
+                    withCredentials([
+                        string(credentialsId: "client_port_${params.ENV}", variable: 'client_port_val'),
+                        string(credentialsId: "anthropic_api_key_${params.ENV}", variable: 'anthropic_api_key_val'),
+                        string(credentialsId: "app_user_${params.ENV}", variable: 'app_user_val'),
+                        string(credentialsId: "gallery_url_${params.ENV}", variable: 'gallery_url_val')
+                    ]) {
+                        env.client_port        = client_port_val
+                        env.anthropic_api_key  = anthropic_api_key_val
+                        env.app_user           = app_user_val
+                        env.gallery_url        = gallery_url_val
+                    }
+                }
+            }
+        }
+
+        stage('Set AWS Role') {
+            steps {
+                script {
+                    def credsId
+
+                    if (params.ENV == 'dev') {
+                        credsId = "aws-dev-account-id"
+                        env.AWS_CREDENTIALS_ID = "aws-dev-account-key"
+                    } else if (params.ENV == 'stage') {
+                        credsId = "aws-stage-account-id"
+                        env.AWS_CREDENTIALS_ID = "aws-stage-account-key"
+                    } else if (params.ENV == 'prod') {
+                        credsId = "aws-prod-account-id"
+                        env.AWS_CREDENTIALS_ID = "aws-prod-account-key"
+                    } else {
+                        error "Unknown environment: ${params.ENV}"
+                    }
+
+                    withCredentials([string(credentialsId: credsId, variable: 'AWS_ACCOUNT_ID')]) {
+                        env.AWS_ROLE_ARN = "arn:aws:iam::${AWS_ACCOUNT_ID}:role/TerraformRole${params.ENV.capitalize()}"
+                    }
+                }
+            }
+        }
+
+        stage('Assume Role and Run Ansible') {
+            steps {
+
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                                  credentialsId: "${env.AWS_CREDENTIALS_ID}"]]) {
+
+                    dir('ansible') {
+
+                        sh """
+                            set +x
+
+                            CREDS=\$(aws sts assume-role \
+                                --role-arn ${env.AWS_ROLE_ARN} \
+                                --role-session-name ansible-ssm-session-${params.ENV})
+
+                            export AWS_ACCESS_KEY_ID=\$(echo \$CREDS | jq -r '.Credentials.AccessKeyId')
+                            export AWS_SECRET_ACCESS_KEY=\$(echo \$CREDS | jq -r '.Credentials.SecretAccessKey')
+                            export AWS_SESSION_TOKEN=\$(echo \$CREDS | jq -r '.Credentials.SessionToken')
+                            export AWS_DEFAULT_REGION=${AWS_REGION}
+
+                            ansible-playbook \
+                                -i ${env.ANSIBLE_INVENTORY} \
+                                ${env.ANSIBLE_PLAYBOOK} \
+                                --extra-vars "env=${params.ENV}" \
+                                --extra-vars "aws_region=${env.AWS_REGION}" \
+                                --extra-vars "client_port=${env.client_port}" \
+                                --extra-vars "anthropic_api_key=${env.anthropic_api_key}" \
+                                --extra-vars "app_user=${env.app_user}" \
+                                --extra-vars "gallery_url=${env.gallery_url}" \
+                                -vvv
+                        """
+                    }
+                }
+            }
+        }
+    }
+}
