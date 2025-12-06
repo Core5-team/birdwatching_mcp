@@ -13,6 +13,8 @@
     "PYTHONUNBUFFERED",
     "noninteractive",
     "dpkg",
-    "psycopg"
+    "psycopg",
+    "CREDS",
+    "creds"
   ]
 }
